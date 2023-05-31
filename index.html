@@ -1,88 +1,83 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-
-    <title>PA1</title>
-    <style>
-      body {
-        background-color: #eeeeee;
-      }
-    </style>
-
-    <script src="./Utils/trackball-rotator.js"></script>
-    <script src="./Utils/m4.js"></script>
-    <script src="./fragmentShader.glsl"></script>
-    <script src="./vertexShader.glsl"></script>
-    <script src="./main.js"></script>
-  </head>
-  <body onload="init()">
-    <h1 style="font-size: 20px">PA1, Variant #16</h1>
-    <h2 style="font-size: 18px; font-weight: 300">
-      Surface of Revolution “Pear”
-    </h2>
-    <h2 style="font-size: 18px; font-weight: 300">TR-23mp, Rudyk Volodymyr</h2>
-    <h3 style="font-size: 16px; font-weight: 300; font-style: italic">
-      Surface from previuos credit module, when I was variant #18
-    </h3>
-
-    <div>
-      <label for="eyeSeparation">Eye separation</label>
-      <input
-        type="range"
-        id="eyeSeparation"
-        name="eyeSeparation"
-        min="0.1"
-        max="1"
-        step="0.001"
-        value="0.02"
-      />
-    </div>
-    <div>
-      <label for="convergence">Convergence</label>
-      <input
-        type="range"
-        id="convergence"
-        name="convergence"
-        min="0.1"
-        max="50"
-        step="0.2"
-        value="15"
-      />
-    </div>
-    <div>
-      <label for="fov">Fov</label>
-      <input
-        type="range"
-        id="fov"
-        name="fov"
-        min="0"
-        
-        max="3"
-        step="0.01"
-        value="0.5"
-      />
-    </div>
-    <div>
-      <label for="near">Near clipping</label>
-      <input
-        type="range"
-        id="near"
-        name="near"
-        min="0"
-        max="20"
-        step="1"
-        value="10"
-      />
-    </div>
-
-    <div id="canvas-holder">
-      <canvas
-        id="webglcanvas"
-        width="600"
-        height="600"
-        style="position: absolute"
-      ></canvas>
-    </div>
-  </body>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <title>PA1</title>
+  <style>
+    body {
+      background-color: #eeeeee;
+    }
+  </style>
+  <script src="./Utils/trackball-rotator.js"></script>
+  <script src="./Utils/m4.js"></script>
+  <script src="./fragmentShader.glsl"></script>
+  <script src="./vertexShader.glsl"></script>
+  <script src="./main.js"></script>
+</head>
+<body onload="init()">
+  <h1 style="font-size: 20px">PA1, Variant #11</h1>
+  <h2 style="font-size: 18px; font-weight: 300">
+    Surface with a Cylindrical Directrix Surface and with a Sinusoid  as Meridian
+  </h2>
+  <h2 style="font-size: 18px; font-weight: 300">TR-22mp, Mariia Kraievska</h2>
+  <h3 style="font-size: 16px; font-weight: 300; font-style: italic">
+    Surface from previous credit module, when I was variant #12
+  </h3>
+  <div>
+    <label for="eyeSeparation">Eye separation</label>
+    <input
+      type="range"
+      id="eyeSeparation"
+      name="eyeSeparation"
+      min="0.1"
+      max="1"
+      step="0.001"
+      value="0.02"
+    />
+  </div>
+  <div>
+    <label for="convergence">Convergence</label>
+    <input
+      type="range"
+      id="convergence"
+      name="convergence"
+      min="0.1"
+      max="50"
+      step="0.2"
+      value="15"
+    />
+  </div>
+  <div>
+    <label for="fov">Fov</label>
+    <input
+      type="range"
+      id="fov"
+      name="fov"
+      min="0"
+      max="3"
+      step="0.01"
+      value="0.5"
+    />
+  </div>
+  <div>
+    <label for="near">Near clipping</label>
+    <input
+      type="range"
+      id="near"
+      name="near"
+      min="0"
+      max="20"
+      step="1"
+      value="10"
+    />
+  </div>
+  <div id="canvas-holder">
+    <canvas
+      id="webglcanvas"
+      width="600"
+      height="600"
+      style="position: absolute"
+    ></canvas>
+  </div>
+</body>
 </html>
