@@ -105,7 +105,7 @@ function draw() {
   let modelView = spaceball.getViewMatrix();
   let rotateToPointZero = m4.axisRotation([0.707, 0.707, 0], 0);
   let matAccum = m4.multiply(rotateToPointZero, modelView);
-  let projection = m4.orthographic(0, 1, 0, 1, -1, 1);
+  let projection = m4.perspective(Math.PI / 8, 1, 8, 12);
   let noRot = m4.multiply(
     rotateToPointZero,
     [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]
