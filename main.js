@@ -398,7 +398,7 @@ function init() {
 
 const redraw = () => {
   draw();
-  window.requestAnimationFrame(reDraw);
+  window.requestAnimationFrame(redraw);
 };
 
 const getWebcam = () => {
