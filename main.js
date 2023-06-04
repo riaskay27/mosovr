@@ -311,8 +311,6 @@ function init() {
     webCamVideo.setAttribute("autoplay", true);
     webCamTexture = createWebCamTexture(gl);
 
-    getWebcam().then((stream) => (webCamVideo.srcObject = stream));
-
     if (!gl) {
       throw "Browser does not support WebGL";
     }
@@ -344,12 +342,22 @@ function init() {
 
   spaceball = new TrackballRotator(canvas, draw, 0);
 
+  window.addEventListener("deviceorientation", handleOrientation);
+
   reDraw();
 }
 
 const reDraw = () => {
   draw();
   window.requestAnimationFrame(reDraw);
+};
+
+const handleOrientation = (event) => {
+  const alpha = event.alpha || 0;
+  const beta = event.beta || 0;
+  const gamma = event.gamma || 0;
+
+  spaceball.setOrientation(alpha, beta, gamma);
 };
 
 const getWebcam = () => {
@@ -371,3 +379,4 @@ const createWebCamTexture = () => {
 };
 
 init();
+
