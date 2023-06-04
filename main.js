@@ -11,6 +11,8 @@ let webCamTexture, webCamVideo, webCamBackground;
 
 const texturePoint = { x: 100, y: 400 };
 
+let orientationEvent = { alpha: 0, beta: 0, gamma: 0 };
+
 const scale = 8;
 const teta = Math.PI / 2;
 const a0 = 0;
@@ -104,7 +106,6 @@ function draw() {
 
   let modelView = spaceball.getViewMatrix();
   let rotateToPointZero = m4.axisRotation([0.707, 0.707, 0], 0);
-  let matAccum = m4.multiply(rotateToPointZero, modelView);
   let projection = m4.orthographic(0, 1, 0, 1, -1, 1);
   let noRot = m4.multiply(
     rotateToPointZero,
@@ -142,6 +143,23 @@ function draw() {
   gl.bindTexture(gl.TEXTURE_2D, texture);
   gl.clear(gl.DEPTH_BUFFER_BIT);
 
+  if (
+    orientationEvent.alpha &&
+    orientationEvent.beta &&
+    orientationEvent.gamma
+  ) {
+    let rotationMatrix = getRotationMatrix(
+      orientationEvent.alpha,
+      orientationEvent.beta,
+      orientationEvent.gamma
+    );
+    let translationMatrix = m4.translation(0, 0, -1);
+
+    modelView = m4.multiply(rotationMatrix, translationMatrix);
+  }
+
+  let matAccum = m4.multiply(rotateToPointZero, modelView);
+
   let matAccumLeft = m4.multiply(translateToLeft, matAccum);
   let matAccumRight = m4.multiply(translateToRight, matAccum);
 
@@ -159,6 +177,34 @@ function draw() {
 
   gl.colorMask(true, true, true, true);
 }
+
+function getRotationMatrix(alpha, beta, gamma) {
+  var _x = beta ? deg2rad(beta) : 0; // beta value
+  var _y = gamma ? deg2rad(gamma) : 0; // gamma value
+  var _z = alpha ? deg2rad(alpha) : 0; // alpha value
+
+  var cX = Math.cos(_x);
+  var cY = Math.cos(_y);
+  var cZ = Math.cos(_z);
+  var sX = Math.sin(_x);
+  var sY = Math.sin(_y);
+  var sZ = Math.sin(_z);
+
+  var m11 = cZ * cY - sZ * sX * sY;
+  var m12 = -cX * sZ;
+  var m13 = cY * sZ * sX + cZ * sY;
+
+  var m21 = cY * sZ + cZ * sX * sY;
+  var m22 = cZ * cX;
+  var m23 = sZ * sY - cZ * cY * sX;
+
+  var m31 = -cX * sY;
+  var m32 = sX;
+  var m33 = cX * cY;
+
+  return [m11, m12, m13, 0, m21, m22, m23, 0, m31, m32, m33, 0, 0, 0, 0, 1];
+}
+
 
 function CreateSurfaceData() {
   let vertexList = [];
@@ -344,10 +390,13 @@ function init() {
 
   spaceball = new TrackballRotator(canvas, draw, 0);
 
-  reDraw();
+  if ("DeviceOrientationEvent" in window) {
+    window.addEventListener("deviceorientation", handleOrientation);
+  } 
+  redraw();
 }
 
-const reDraw = () => {
+const redraw = () => {
   draw();
   window.requestAnimationFrame(reDraw);
 };
@@ -368,6 +417,12 @@ const createWebCamTexture = () => {
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
   return textureID;
+};
+
+const handleOrientation = (event) => {
+  orientationEvent.alpha = event.alpha;
+  orientationEvent.beta = event.beta;
+  orientationEvent.gamma = event.gamma;
 };
 
 init();
