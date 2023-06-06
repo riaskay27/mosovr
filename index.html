@@ -15,7 +15,7 @@
   <script src="./main.js"></script>
 </head>
 <body onload="init()">
-  <h1 style="font-size: 20px">PA1, Variant #11</h1>
+  <h1 style="font-size: 20px">PA2, Variant #11</h1>
   <h2 style="font-size: 18px; font-weight: 300">
     Surface with a Cylindrical Directrix Surface and with a Sinusoid  as Meridian
   </h2>
@@ -80,4 +80,44 @@
     ></canvas>
   </div>
 </body>
+
+<script>
+  
+
+
+
+  var input_sv = document.getElementById("eyeSeparation");
+  var input_co = document.getElementById("convergence");
+  var input_f =  document.getElementById("fov");
+  var input_c = document.getElementById("near");
+
+  input_sv.addEventListener("input", function() {
+  SValue = this.value;
+  stereoCamera.mEyeSeparation = SValue;
+  document.getElementById("eyeSeparation").innerHTML = SValue;
+  draw();
+}, false);
+
+input_f.addEventListener("input", function() {
+  Field = this.value;
+  stereoCamera.mFOV = Field;
+  document.getElementById("fov").innerHTML = Field;
+  draw();
+}, false);
+
+input_c.addEventListener("input", function() {
+  c_distance = this.value;
+  stereoCamera.mNearClippingDistance = c_distance;
+  document.getElementById("near").innerHTML = c_distance;
+  draw();
+}, false);
+
+input_co.addEventListener("input", function() {
+  co_distance = this.value;
+  stereoCamera.mConvergence = co_distance;
+  document.getElementById("convergence").innerHTML = co_distance;
+  draw();
+}, false);
+
+</script>
 </html>
