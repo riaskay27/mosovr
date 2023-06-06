@@ -370,8 +370,8 @@ function initGL() {
   );
   shProgram.iNormalVertex = gl.getAttribLocation(prog, "normal");
 
-  shProgram.iTextureCoords = gl.getAttribLocation(prog, "textureCoords");
-  shProgram.iTextureU = gl.getUniformLocation(prog, "textureU");
+  shProgram.iTextureCoords = gl.getAttribLocation(prog, "vTextureCoords");
+  shProgram.iTexture = gl.getUniformLocation(prog, "textureU");
 
   surface = new Model("Surface");
   let data = CreateSurfaceData();
@@ -624,4 +624,20 @@ if (window.DeviceOrientationEvent) {
     sensor.start();
 } else alert('Gyroscope not supported');
 
+}
+function DrawWebCamVideo() {
+  gl.bindTexture(gl.TEXTURE_2D, TextureWebCam);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, video_cam);
+
+  let ViewMatrix = m4.translation(0, 0, 0);
+  let projection = m4.orthographic(-CanvasWidth / 2.0, CanvasWidth / 2.0, -CanvasHeight / 2.0, CanvasHeight / 2.0, 1.0, 20000);
+
+  let WorldViewMatrix = m4.multiply(m4.translation(0, 0, -100), ViewMatrix);
+  let ModelViewProjection = m4.multiply(projection, WorldViewMatrix);
+
+  gl.uniformMatrix4fv(shProgram.iModelViewProjectionMatrix, false, ModelViewProjection);
+
+  gl.uniform1i(shProgram.iTexture, 0);
+
+  BackgroundVideoModel.draw();
 }
