@@ -55,6 +55,7 @@ let audioSource;
 let audioPanner;
 let audioFilter;
 let centerFrequencyInput = 1000;
+let reverbNode;
 let Q_value = 5;
 let Volume = 1;
 let PlaybackRate = 1;
@@ -552,6 +553,7 @@ function init() {
 
             audioPanner = audioContext.createPanner();
             audioFilter = audioContext.createBiquadFilter();
+            reverbNode = audioContext.createConvolver();
 
             audioPanner.panningModel = "HRTF";
             audioPanner.distanceModel = "linear";
@@ -597,7 +599,19 @@ function init() {
         }
     });
 
+    const reverbCheckbox = document.getElementById('reverbCheckbox');
 
+    reverbCheckbox.addEventListener('change', () => {
+        if (reverbCheckbox.checked) {
+            audioFilter.disconnect();
+            audioFilter.connect(reverbNode);
+            reverbNode.connect(audioContext.destination);
+        } else {
+            reverbNode.disconnect();
+            audioFilter.disconnect();
+            audioFilter.connect(audioContext.destination);
+        }
+    });
     audio.play();
 
 
