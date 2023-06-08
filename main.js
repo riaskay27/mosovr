@@ -9,7 +9,6 @@ let stereoCamera = new StereoCamera(5, 0.4, 1, 1, 4, 100);
 
 let TextureWebCam;
 let video;
-
 const scale = 8;
 const teta = Math.PI / 2;
 const a0 = 0;
