@@ -1,3 +1,4 @@
+
 "use strict";
 
 let gl;
@@ -36,16 +37,30 @@ let BackgroundVideoModel;
 
 let image;
 
+let SphereTexture;
+let Sphere;
+let GyroscopeRotate = false;
+let SpaceballCheckbox = true;
+
 let timeStamp;
-let deltaRotationMatrix = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
-let alpha = 0,
-    beta = 0,
-    gamma = 0,
-    x,
-    y,
-    z;
-const EPSILON = 0.001;
-const MS2S = 1.0 / 1000.0;
+
+let 
+    x= 0,
+    y = 0,
+    z = 0;
+
+let audio = null;
+let audioContext;
+let audioSource;
+let audioPanner;
+let audioFilter;
+let reverbNode;
+let centerFrequencyInput = 1000;
+let Q_value = 5;
+let Volume = 1;
+let PlaybackRate = 1;
+
+
 
 class Model {
   constructor(name) {
@@ -65,6 +80,13 @@ class Model {
     this.count = vertices.length / 3;
   }
 
+  bufferData(vertices) {
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.iVertexBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STREAM_DRAW);
+
+        this.count = vertices.length / 3;
+  }
+
   draw() {
     gl.bindBuffer(gl.ARRAY_BUFFER, this.iVertexBuffer);
     gl.vertexAttribPointer(shProgram.iAttribVertex, 3, gl.FLOAT, false, 0, 0);
@@ -73,6 +95,12 @@ class Model {
     gl.bindBuffer(gl.ARRAY_BUFFER, this.iTextureBuffer);
     gl.vertexAttribPointer(shProgram.iTextureCoords, 2, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(shProgram.iTextureCoords);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, this.count);
+  }
+  drawSphere() {
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.iVertexBuffer);
+    gl.vertexAttribPointer(shProgram.iAttribVertex, 3, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(shProgram.iAttribVertex);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, this.count);
   }
 }
@@ -169,42 +197,120 @@ function StereoCamera(
 }
 
 function draw() {
-  gl.clearColor(0, 0, 0, 1);
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    
-    getRotationMatrix();
-    DrawWebCamVideo();
+  if (audioPanner) {
+    audioFilter.frequency.value = centerFrequencyInput;
+    audioFilter.Q.value = Q_value;
+    audio.volume = Volume;
+    audio.playbackRate = PlaybackRate;
 
-    gl.clear(gl.DEPTH_BUFFER_BIT);
-    stereoCamera.ApplyLeftFrustum();
-    gl.colorMask(true, false, false, false);
-    
-    let modelView = deltaRotationMatrix;
-    let translateToPointZero = m4.translation(World_X, World_Y, World_Z);
-
-    gl.uniformMatrix4fv(shProgram.iModelViewProjectionMatrix, false, m4.multiply(stereoCamera.mModelViewMatrix, m4.multiply(m4.multiply(stereoCamera.mProjectionMatrix, translateToPointZero), modelView)));
-    gl.bindTexture(gl.TEXTURE_2D, SurfaceTexture);
-    gl.uniform1i(shProgram.iTexture, 0);
-
-    surface.draw();
-
-    gl.clear(gl.DEPTH_BUFFER_BIT);
-    stereoCamera.ApplyRightFrustum();
-    gl.colorMask(false, true, true, false);
-    
-    let modelView1 = deltaRotationMatrix;
-    let translateToPointZero1 = m4.translation(World_X, World_Y, World_Z);
-
-    gl.uniformMatrix4fv(shProgram.iModelViewProjectionMatrix, false, m4.multiply(stereoCamera.mModelViewMatrix, m4.multiply(m4.multiply(stereoCamera.mProjectionMatrix, translateToPointZero1), modelView1)));
-    gl.bindTexture(gl.TEXTURE_2D, SurfaceTexture);
-    gl.uniform1i(shProgram.iTexture, 0);
-
-    surface.draw();
-
-
-    gl.colorMask(true, true, true, true);
-    getRotationMatrix();
+    if (GyroscopeRotate) {
+        audioPanner.setPosition(
+            (x * 1000).toFixed(2),
+            (y * 1000).toFixed(2),
+            (z * 1000).toFixed(2)
+        );
+    } else {
+        audioPanner.setPosition(
+            World_X * 1000,
+            World_Y * 1000,
+            World_Z * 1000
+        );
+    }
 }
+
+gl.clearColor(0, 0, 0, 1);
+gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+if (camera_ind) {
+    DrawWebCamVideo();
+}
+
+gl.clear(gl.DEPTH_BUFFER_BIT);
+stereoCamera.ApplyLeftFrustum();
+gl.colorMask(true, false, false, false);
+DrawSurface();
+DrawSphere();
+
+gl.clear(gl.DEPTH_BUFFER_BIT);
+stereoCamera.ApplyRightFrustum();
+gl.colorMask(false, true, true, false);
+DrawSurface();
+DrawSphere();
+gl.colorMask(true, true, true, true);
+}
+
+function DrawSurface() {
+  let modelView;
+  let translateToPointZero;
+  if (rotate_spaceball) {
+      modelView = spaceball.getViewMatrix();
+      translateToPointZero = m4.translation(0, 0, -20);
+  } else {
+      modelView = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+      translateToPointZero = m4.translation(-1, 0, -20);
+  }
+
+  gl.uniformMatrix4fv(shProgram.iModelViewProjectionMatrix, false, m4.multiply(stereoCamera.mModelViewMatrix, m4.multiply(m4.multiply(stereoCamera.mProjectionMatrix, translateToPointZero), modelView)));
+  gl.bindTexture(gl.TEXTURE_2D, SurfaceTexture);
+  gl.uniform1i(shProgram.iTexture, 0);
+
+  surface.draw();
+}
+
+function DrawSphere() {
+  let modelView = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+  let translateToPointZero;
+  if (GyroscopeRotate) {
+      translateToPointZero = m4.translation(x.toFixed(2), y.toFixed(2), (z - 10).toFixed(2));
+  } else {
+      translateToPointZero = m4.translation(World_X, World_Y, World_Z - 10);
+  }
+
+  gl.uniformMatrix4fv(shProgram.iModelViewProjectionMatrix, false, m4.multiply(stereoCamera.mModelViewMatrix, m4.multiply(m4.multiply(stereoCamera.mProjectionMatrix, translateToPointZero), modelView)));
+  gl.bindTexture(gl.TEXTURE_2D, SphereTexture);
+  gl.uniform1i(shProgram.iTexture, 0);
+
+  Sphere.drawSphere();
+}
+
+function CreateSphereSurface(radius = 2) {
+  const vertices = [];
+  const increment = 0.5;
+  const halfPi = Math.PI * 0.5;
+  const fullPi = Math.PI;
+  
+  for (let longitude = -fullPi; longitude < fullPi; longitude += increment) {
+  for (let latitude = -halfPi; latitude < halfPi; latitude += increment) {
+  const lon1 = longitude;
+  const lon2 = longitude + increment;
+  const lat1 = latitude;
+  const lat2 = latitude + increment;
+  vertices.push(
+    ...sphereSurfaceData(radius, lon1, lat1),
+    ...sphereSurfaceData(radius, lon2, lat1),
+    ...sphereSurfaceData(radius, lon1, lat2),
+    ...sphereSurfaceData(radius, lon2, lat2),
+    ...sphereSurfaceData(radius, lon2, lat1),
+    ...sphereSurfaceData(radius, lon1, lat2)
+  );
+}
+}
+return vertices;
+}
+
+
+function sphereSurfaceData(radius, longitude, latitude) {
+  const sinLon = Math.sin(longitude);
+  const cosLon = Math.cos(longitude);
+  const sinLat = Math.sin(latitude);
+  const cosLat = Math.cos(latitude);
+  
+  const x = radius * sinLon * cosLat;
+  const y = radius * sinLon * sinLat;
+  const z = radius * cosLon;
+  
+  return [x, y, z];
+  }
 
 function CreateSurfaceData() {
   let vertexList = [];
@@ -291,72 +397,6 @@ function degriesToRadians(angle) {
   return (angle * Math.PI) / 180;
 }
 
-function getRotationMatrix() {
-  if (x != null) {
-      let dT = (Date.now() - timeStamp) * MS2S;
-      let omegaMagnitude = Math.sqrt(x * x, y * y, z * z);
-      if (omegaMagnitude > EPSILON) {
-          alpha += x * dT
-          beta += y * dT
-          gamma += z * dT
-          alpha = Math.min(Math.max(alpha, -Math.PI * 0.25), Math.PI * 0.25)
-          beta = Math.min(Math.max(beta, -Math.PI * 0.25), Math.PI * 0.25)
-          gamma = Math.min(Math.max(gamma, -Math.PI * 0.25), Math.PI * 0.25)
-
-          let deltaRotationVector = [];
-
-          deltaRotationVector.push(alpha);
-          deltaRotationVector.push(beta);
-          deltaRotationVector.push(gamma);
-
-          deltaRotationMatrix = getRotationMatrixFromVector(deltaRotationVector)
-
-          timeStamp = Date.now();
-      }
-  }
-}
-
-function getRotationMatrixFromVector(rotationVector) {
-  const q1 = rotationVector[0];
-  const q2 = rotationVector[1];
-  const q3 = rotationVector[2];
-  let q0;
-
-  if (rotationVector.length >= 4) {
-      q0 = rotationVector[3];
-  } else {
-      q0 = 1 - q1 * q1 - q2 * q2 - q3 * q3;
-      q0 = q0 > 0 ? Math.sqrt(q0) : 0;
-  }
-  const sq_q1 = 2 * q1 * q1;
-  const sq_q2 = 2 * q2 * q2;
-  const sq_q3 = 2 * q3 * q3;
-  const q1_q2 = 2 * q1 * q2;
-  const q3_q0 = 2 * q3 * q0;
-  const q1_q3 = 2 * q1 * q3;
-  const q2_q0 = 2 * q2 * q0;
-  const q2_q3 = 2 * q2 * q3;
-  const q1_q0 = 2 * q1 * q0;
-  let R = [];
-  R.push(1 - sq_q2 - sq_q3);
-  R.push(q1_q2 - q3_q0);
-  R.push(q1_q3 + q2_q0);
-  R.push(0.0);
-  R.push(q1_q2 + q3_q0);
-  R.push(1 - sq_q1 - sq_q3);
-  R.push(q2_q3 - q1_q0);
-  R.push(0.0);
-  R.push(q1_q3 - q2_q0);
-  R.push(q2_q3 + q1_q0);
-  R.push(1 - sq_q1 - sq_q2);
-  R.push(0.0);
-  R.push(0.0);
-  R.push(0.0);
-  R.push(0.0);
-  R.push(1.0);
-  return R;
-}
-
 function initGL() {
   let prog = createProgram(gl, vertexShaderSource, fragmentShaderSource);
 
@@ -380,6 +420,9 @@ function initGL() {
   BackgroundVideoModel = new Model('Camera');
   let BackgroundData = CreateBackgroundData();
   BackgroundVideoModel.bufferData(BackgroundData[0], BackgroundData[1], BackgroundData[2]);
+
+  Sphere = new Model("Sphere");
+  Sphere.bufferData(CreateSphereSurface());
 }
 
 function CreateBackgroundData() {
@@ -424,7 +467,6 @@ function createProgram(gl, vShader, fShader) {
 function init() {
   let canvas;
   readGyroscope();
-  getRotationMatrix();
 
   try {
     canvas = document.getElementById("webglcanvas");
@@ -497,6 +539,51 @@ function init() {
           }
           requestAnimationFrame(render);
       }
+
+      audio = document.getElementById("audio");
+
+      audio.addEventListener("pause", () => {
+          audioContext.resume();
+      });
+
+      audio.addEventListener("play", () => {
+        if (!audioContext) {
+            audioContext = new(window.AudioContext || window.webkitAudioContext)();
+            audioSource = audioContext.createMediaElementSource(audio);
+
+            audioPanner = audioContext.createPanner();
+            audioFilter = audioContext.createBiquadFilter();
+            reverbNode = audioContext.createConvolver();
+
+            audioPanner.panningModel = "HRTF";
+            audioPanner.distanceModel = "linear";
+            audioFilter.type = "lowpass";
+            audioFilter.frequency.value = centerFrequencyInput;
+            audioFilter.Q.value = Q_value;
+
+            audio.volume = Volume;
+            audio.playbackRate = PlaybackRate;
+
+            audioContext.resume();
+        }
+    });
+
+    const filter = document.getElementById("filter_check");
+
+    filter.addEventListener("change", function () {
+        if (filter.checked) {
+            audioPanner.disconnect();
+            audioPanner.connect(audioFilter);
+            audioFilter.connect(audioContext.destination);
+        } else {
+            audioPanner.disconnect();
+            audioPanner.connect(audioContext.destination);
+        }
+    });
+
+
+    audio.play();
+
 
       playVideo();
   }, 500);
@@ -604,6 +691,26 @@ function loadTexture(gl, url) {
   image.src = url;
 
   return SurfaceTexture;
+}
+
+function LoadSphereTexture() {
+  SphereTexture = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, SphereTexture);
+
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE,
+      new Uint8Array([0, 0, 255, 255]));
+
+  const SphereImage = new Image();
+  SphereImage.crossOrigin = "anonymus";
+  SphereImage.onload = () => {
+      gl.bindTexture(gl.TEXTURE_2D, SphereTexture);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, SphereImage);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+      draw();
+  };
+  SphereImage.src = "https://www.the3rdsequence.com/texturedb/download/260/texture/jpg/1024/red+hot+fire+flames-1024x1024.jpg";
 }
 
 function isPowerOf2(value) {

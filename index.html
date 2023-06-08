@@ -1,123 +1,275 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-  <title>PA1</title>
-  <style>
-    body {
-      background-color: #eeeeee;
-    }
-  </style>
-  <script src="./Utils/trackball-rotator.js"></script>
-  <script src="./Utils/m4.js"></script>
-  <script src="./fragmentShader.glsl"></script>
-  <script src="./vertexShader.glsl"></script>
-  <script src="./main.js"></script>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>GW</title>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/nipplejs/0.7.1/nipplejs.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
+    <script src="./Utils/trackball-rotator.js"></script>
+    <script src="./Utils/m4.js"></script>
+    <script src="./fragmentShader.glsl"></script>
+    <script src="./vertexShader.glsl"></script>
+    <script src="./main.js"></script>
 </head>
+
 <body onload="init()">
+
   <h1 style="font-size: 20px">PA2, Variant #11</h1>
   <h2 style="font-size: 18px; font-weight: 300">
     Surface with a Cylindrical Directrix Surface and with a Sinusoid  as Meridian
   </h2>
+  <h2 style="font-size: 18px; font-weight: 300">
+    Shelf low-pass filter
+  </h2>
   <h2 style="font-size: 18px; font-weight: 300">TR-22mp, Mariia Kraievska</h2>
   <h3 style="font-size: 16px; font-weight: 300; font-style: italic">
     Surface from previous credit module, when I was variant #12
+    Since the gyroscope does not work on the computer and the music does not run on the phone, I had to make an animation of the movement of the sphere.
   </h3>
+
   <div>
-    <label for="eyeSeparation">Eye separation</label>
-    <input
-      type="range"
-      id="eyeSeparation"
-      name="eyeSeparation"
-      min="0.1"
-      max="1"
-      step="0.001"
-      value="0.02"
-    />
+    <label for="SeparationValue" class="form-label">Eye separation:</label>
+    <input type="range" name="eyeSeparation" min="0.1" max="1"step="0.001" value="0.02"id="SeparationValue" value="0">
   </div>
   <div>
-    <label for="convergence">Convergence</label>
-    <input
-      type="range"
-      id="convergence"
-      name="convergence"
-      min="0.1"
-      max="50"
-      step="0.2"
-      value="15"
-    />
+    <label for="Field" class="form-label">Field of View:</label>
+    <input  type="range"name="fov"min="0" max="14"step="0.01"value="0.5" id="Field" value="14">
+  </div>  
+  <div>
+    <label for="c_distance" class="form-label">Niar Clipping distance:</label>
+    <input type="range" name="near" min="0" max="20" step="1" value="10" id="c_distance" value="4">
   </div>
   <div>
-    <label for="fov">Fov</label>
-    <input
-      type="range"
-      id="fov"
-      name="fov"
-      min="0"
-      max="3"
-      step="0.01"
-      value="0.5"
-    />
+    <label for="co_distance" class="form-label">Convergence distance:</label>
+    <input type="range" name="convergence" min="0.1" max="50" step="0.2" value="15" id="co_distance" value="5">
   </div>
-  <div>
-    <label for="near">Near clipping</label>
-    <input
-      type="range"
-      id="near"
-      name="near"
-      min="0"
-      max="20"
-      step="1"
-      value="10"
-    />
-  </div>
+  <div class="form-check">
+    <input class="form-check-input" type="checkbox" value="" id="toggleCheckbox">
+    <label class="form-check-label" for="toggleCheckbox">
+        Animation
+    </label>
+</div>
+<div>
+  <label for="World_X" class="form-label">Sphere X:</label>
+  <span class="badge bg-primary" id="World_X_text">0</span>
+  <input type="range" min="-1" max="1" step="0.1" id="World_X" value="0">
+</div>
+<div>
+  <label for="World_Y" class="form-label">Sphere Y:</label>
+  <span class="badge bg-primary" id="World_Y_text">0</span>
+  <input type="range" min="-1" max="1" step="0.1" id="World_Y" value="0">
+</div>
+
+<div>
+  <label for="World_Z" class="form-label">Sphere Z:</label>
+  <span class="badge bg-primary" id="World_Z_text">0</span>
+  <input type="range"  min="-1" max="1" step="0.1" id="World_Z" value="0">
+</div>
+
+
+<div class="form-check">
+    <input class="form-check-input" type="checkbox" value="" id="filter_check" checked>
+    <label class="form-check-label" for="filter_check">
+      Shelf low-pass filter
+    </label>
+</div>
+<div>
+  <label for="Volume" class="form-label">Volume:</label>
+  <input type="range" min="0" max="1" step="0.1" id="Volume" value="1">
+</div>
+<div>
+  <label for="PlaybackRate" class="form-label">PlaybackRate:</label>
+  <input type="range"  min="0.2" max="2" step="0.1" id="PlaybackRate" value="1">
+</div>
+<div>
+  <label for="Q_value" class="form-label">Q value (bandwidth):</label>
+  <input type="range"  min="0.1" max="10" step="0.1" id="Q_value" value="5">
+</div>
+<div>
+  <label for="centerFrequencyInput" class="form-label">Frequency:</label>
+  <input type="range" min="0" max="22050" step="10" id="centerFrequencyInput" value="1000">
+</div>
+<div class="col">
   <div id="canvas-holder">
-    <canvas
-      id="webglcanvas"
-      width="600"
-      height="600"
-      style="position: absolute"
-    ></canvas>
+      <canvas class="rounded-3" width="580" height="435" id="webglcanvas" style="background-color: gray"></canvas>
   </div>
+</div>
+<div class="card mt-3 mb-2">
+  <audio id="audio" class="audio-player" loop>
+      <source src="music/favorite.mp3" id="audioSource" type="audio/mpeg" />
+      Your browser does not support the audio element.
+  </audio>
+  <button type="button" class="btn btn-primary" onclick="triggerFileInput()">AUDIO</button>
+  <input type="file" id="audioFileInput" accept="audio/*" onchange="changeAudio()" style="display: none;" />
+</div>
+
+
 </body>
 
 <script>
-  
+    let ind = false;
+    let camera_ind = false;
+    let rotate_spaceball = true;
+    let radius = 3.5;
+   
+
+    function triggerFileInput() {
+        var fileInput = document.getElementById("audioFileInput");
+        fileInput.click();
+    }
+
+    function changeAudio() {
+        var audio = document.getElementById("audio");
+        var source = document.getElementById("audioSource");
+        var fileInput = document.getElementById("audioFileInput");
+
+        var selectedFile = fileInput.files[0];
+        if (selectedFile) {
+            var fileReader = new FileReader();
+            fileReader.onload = function(event) {
+                source.src = event.target.result;
+                audio.load();
+                audio.play();
+            };
+            fileReader.readAsDataURL(selectedFile);
+        }
+    }
 
 
+    var input_sv = document.getElementById("SeparationValue");
+    var input_f = document.getElementById("Field");
+    var input_c = document.getElementById("c_distance");
+    var input_co = document.getElementById("co_distance");
+    var input_cf = document.getElementById("centerFrequencyInput");
+    var input_qv = document.getElementById("Q_value");
+    var input_vo = document.getElementById("Volume");
+    var input_pr = document.getElementById("PlaybackRate");
+    var input_x = document.getElementById("World_X");
+    var input_y = document.getElementById("World_Y");
+    var input_z = document.getElementById("World_Z");
 
-  var input_sv = document.getElementById("eyeSeparation");
-  var input_co = document.getElementById("convergence");
-  var input_f =  document.getElementById("fov");
-  var input_c = document.getElementById("near");
+    const toggleCheckbox = document.getElementById("toggleCheckbox");
 
-  input_sv.addEventListener("input", function() {
-  SValue = this.value;
-  stereoCamera.mEyeSeparation = SValue;
-  document.getElementById("eyeSeparation").innerHTML = SValue;
-  draw();
-}, false);
+    toggleCheckbox.addEventListener("change", function() {
+        if (toggleCheckbox.checked) {
+            $('#coordinates_get *').prop('disabled', true);
+            $('#Radius').prop('disabled', false);
+            moveInCircle();
+            ind = true;
+        } else {
+            $('#coordinates_get *').prop('disabled', false);
+            $('#Radius').prop('disabled', true);
+            ind = false;
+        }
+    });
 
-input_f.addEventListener("input", function() {
-  Field = this.value;
-  stereoCamera.mFOV = Field;
-  document.getElementById("fov").innerHTML = Field;
-  draw();
-}, false);
+    input_pr.addEventListener("input", function() {
+        document.getElementById("PlaybackRate_text").innerHTML = this.value;
+        PlaybackRate = this.value;
+        draw();
+    }, false);
 
-input_c.addEventListener("input", function() {
-  c_distance = this.value;
-  stereoCamera.mNearClippingDistance = c_distance;
-  document.getElementById("near").innerHTML = c_distance;
-  draw();
-}, false);
+    input_vo.addEventListener("input", function() {
+        document.getElementById("Volume").innerHTML = this.value;
+        Volume = this.value;
+        draw();
+    }, false);
 
-input_co.addEventListener("input", function() {
-  co_distance = this.value;
-  stereoCamera.mConvergence = co_distance;
-  document.getElementById("convergence").innerHTML = co_distance;
-  draw();
-}, false);
+    input_cf.addEventListener("input", function() {
+        document.getElementById("centerFrequencyInput_text").innerHTML = this.value;
+        centerFrequencyInput = this.value;
+        draw();
+    }, false);
+
+    input_qv.addEventListener("input", function() {
+        document.getElementById("Q_value_text").innerHTML = this.value;
+        Q_value = this.value;
+        draw();
+    }, false);
+
+    input_sv.addEventListener("input", function() {
+        SValue = this.value;
+        stereoCamera.mEyeSeparation = SValue;
+        document.getElementById("SeparationValue_text").innerHTML = SValue;
+        draw();
+    }, false);
+
+    input_f.addEventListener("input", function() {
+        Field = this.value;
+        stereoCamera.mFOV = Field;
+        document.getElementById("Field_text").innerHTML = Field;
+        draw();
+    }, false);
+
+    input_c.addEventListener("input", function() {
+        c_distance = this.value;
+        stereoCamera.mNearClippingDistance = c_distance;
+        document.getElementById("c_distance_text").innerHTML = c_distance;
+        draw();
+    }, false);
+
+    input_co.addEventListener("input", function() {
+        co_distance = this.value;
+        stereoCamera.mConvergence = co_distance;
+        document.getElementById("co_distance_text").innerHTML = co_distance;
+        draw();
+    }, false);
+
+    input_x.addEventListener("input", function() {
+        World_X = this.value;
+        document.getElementById("World_X_text").innerHTML = this.value;
+        draw();
+    }, false);
+
+    input_y.addEventListener("input", function() {
+        World_Y = this.value;
+        document.getElementById("World_Y_text").innerHTML = this.value;
+        draw();
+    }, false);
+
+    input_z.addEventListener("input", function() {
+        World_Z = this.value;
+        document.getElementById("World_Z_text").innerHTML = this.value;
+        draw();
+    }, false);
+
+    function moveInCircle() {
+        let angle = 0;
+
+        function animate() {
+
+            World_X = Math.cos(angle) * radius;
+            World_Y = Math.sin(angle) * radius;
+            World_Z = Math.sin(angle * 0.5) * radius;
+
+            document.getElementById("World_X_text").innerHTML = World_X.toFixed(2);
+            document.getElementById("World_Y_text").innerHTML = World_Y.toFixed(2);
+            document.getElementById("World_Z_text").innerHTML = World_Z.toFixed(2);
+
+            const World_X_inputRange = document.getElementById("World_X");
+            const World_Y_inputRange = document.getElementById("World_Y");
+            const World_Z_inputRange = document.getElementById("World_Z");
+
+            World_X_inputRange.value = World_X.toFixed(2);
+            World_Y_inputRange.value = World_Y.toFixed(2);
+            World_Z_inputRange.value = World_Z.toFixed(2);
+
+            angle += 0.01;
+
+            if (angle >= 2 * Math.PI) {
+                angle = 0;
+            }
+            if (ind) {
+                requestAnimationFrame(animate);
+            }
+        }
+
+        requestAnimationFrame(animate);
+    }
+
 
 </script>
+
 </html>
