@@ -54,7 +54,6 @@ let audioContext;
 let audioSource;
 let audioPanner;
 let audioFilter;
-let reverbNode;
 let centerFrequencyInput = 1000;
 let Q_value = 5;
 let Volume = 1;
@@ -553,7 +552,6 @@ function init() {
 
             audioPanner = audioContext.createPanner();
             audioFilter = audioContext.createBiquadFilter();
-            reverbNode = audioContext.createConvolver();
 
             audioPanner.panningModel = "HRTF";
             audioPanner.distanceModel = "linear";
@@ -563,6 +561,24 @@ function init() {
 
             audio.volume = Volume;
             audio.playbackRate = PlaybackRate;
+
+            const reverbUrl = "music/favorite.mp3";
+                const reverbRequest = new XMLHttpRequest();
+                reverbRequest.open("GET", reverbUrl, true);
+                reverbRequest.responseType = "arraybuffer";
+
+                reverbRequest.onload = function () {
+                    const audioData = reverbRequest.response;
+                    audioContext.decodeAudioData(audioData, function (buffer) {
+                        reverbNode.buffer = buffer;
+                        audioSource.connect(audioPanner);
+                        audioPanner.connect(audioFilter);
+                        audioFilter.connect(reverbNode);
+                        reverbNode.connect(audioContext.destination);
+                    });
+                };
+
+                reverbRequest.send();
 
             audioContext.resume();
         }
